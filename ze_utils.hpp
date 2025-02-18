@@ -6,7 +6,7 @@
 // It is used to parse the return code for log and debug.
 // current support below return code:
 // - ze_result_t
-std::string ze_get_error_code(const ze_result_t result) {
+std::string zeGetErrorString(const ze_result_t result) {
   if (result == ZE_RESULT_SUCCESS) {
     return "ZE_RESULT_SUCCESS";
   } else if (result == ZE_RESULT_NOT_READY) {
