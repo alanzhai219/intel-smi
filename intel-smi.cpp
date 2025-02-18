@@ -124,7 +124,7 @@ inline ze_device_handle_t findDevice(ze_driver_handle_t pDriver,
 int main(int argc, char* argv[]) {
     // process args
     bool use_print_usage = smi_argparse(argc, argv, "-h", "--help");
-    bool use_new_init_api = smi_argparse(argc, argv, "-n", "--new_api");
+    bool use_new_api = smi_argparse(argc, argv, "-n", "--new_api");
 
     // 
     if (use_print_usage) {
@@ -133,16 +133,44 @@ int main(int argc, char* argv[]) {
     }
 
     // step 0: zeInitDrivers
-    uint32_t driverCount = 0;
+    // drv
+    uint32_t drv_cnt = 0;
+    std::vector<ze_driver_handle_t> drv_list;
 
-    ze_init_driver_type_desc_t driverTypeDesc = {ZE_STRUCTURE_TYPE_INIT_DRIVER_TYPE_DESC};
-    driverTypeDesc.flags = ZE_INIT_DRIVER_TYPE_FLAG_GPU;
-    driverTypeDesc.pNext = nullptr;
+    if (use_new_api) {
+        ze_init_driver_type_desc_t driverTypeDesc = {};
+        driverTypeDesc.flags = ZE_INIT_DRIVER_TYPE_FLAG_GPU;
+        driverTypeDesc.pNext = nullptr;
 
-    if (use_new_init_api) {
-        CHECK_ZE_STATUS(zeInitDrivers(&driverCount, nullptr, &driverTypeDesc));
+        CHECK_ZE_STATUS(zeInitDrivers(&drv_cnt, nullptr, &driverTypeDesc));
+        drv_list.resize(drv_cnt);
+        CHECK_ZE_STATUS(zeInitDrivers(&drv_cnt, drv_list.data(), &driverTypeDesc));
+
     } else {
+        // init
         CHECK_ZE_STATUS(zeInit(ZE_INIT_DRIVER_TYPE_FLAG_GPU));
+
+        CHECK_ZE_STATUS(zeDriverGet(&drv_cnt, nullptr));
+        drv_list.resize(drv_cnt);
+        CHECK_ZE_STATUS(zeDriverGet(&drv_cnt, drv_list.data()));
+    }
+
+    // step 1: get device
+    uint32_t dev_id = 0;
+    uint32_t dev_cnt = 0;
+    std::vector<ze_device_handle_t> dev_list;
+
+    for (auto drv : drv_list) {
+        // get dev cnt
+        CHECK_ZE_STATUS(zeDeviceGet(drv, &dev_cnt, nullptr));
+        // get dev list attached to specific drv
+        dev_list.resize(dev_cnt);
+        CHECK_ZE_STATUS(zeDeviceGet(drv, &dev_cnt, dev_list.data()));
+        // get dev from dev list
+        for (auto dev: dev_list) {
+            // printShortInfo, drv, dev, dev_id
+            // printProcess
+        }
     }
 
 
@@ -166,14 +194,11 @@ int main(int argc, char* argv[]) {
   delete[] versions;
 #endif
 
-  std::vector<ze_driver_handle_t> drivers(driverCount);
-  CHECK_ZE_STATUS(zeInitDrivers(&driverCount, drivers.data(), &driverTypeDesc));
 
   ze_driver_handle_t pDriver = nullptr;
   ze_device_handle_t pDevice = nullptr;
-  for (uint32_t driverIdx = 0; driverIdx < driverCount; ++driverIdx) {
-    pDriver = drivers[driverIdx];
-
+  for (uint32_t driverIdx = 0; driverIdx < drv_cnt; ++driverIdx) {
+    pDriver = drv_list[driverIdx];
   }
 
   const ze_device_type_t dev_type = ZE_DEVICE_TYPE_GPU; 
