@@ -13,11 +13,11 @@ cmake -DCMAKE_INSTALL_PREFIX=/your/specific/path ..
 make install
 
 ## setup env
-echo "export $L0_HOME=/your/specific/path" >> .bashrc
-echo "export $LIBRARY_PATH=${L0_HOME}/lib:${LIBRARY_PATH}" >> .bashrc
-echo "export $LD_LIBRARY_PATH=${L0_HOME}/lib:${LD_LIBRARY_PATH}" >> .bashrc
-echo "export $C_INCLUDE_PATH=${L0_HOME}/include:${C_INCLUDE_PATH}" >> .bashrc
-echo "export $CPLUS_INCLUDE_PATH=${L0_HOME}/include:${CPLUS_INCLUDE_PATH}" >> .bashrc
+echo "export $L0_HOME=/your/specific/path" >> ~/.zshrc
+echo "export $LIBRARY_PATH=${L0_HOME}/lib:${LIBRARY_PATH}" >> ~/.zshrc
+echo "export $LD_LIBRARY_PATH=${L0_HOME}/lib:${LD_LIBRARY_PATH}" >> ~/.zshrc
+echo "export $C_INCLUDE_PATH=${L0_HOME}/include:${C_INCLUDE_PATH}" >> ~/.zshrc
+echo "export $CPLUS_INCLUDE_PATH=${L0_HOME}/include:${CPLUS_INCLUDE_PATH}" >> ~/.zshrc
 ```
 
 # build intel-smi

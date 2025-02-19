@@ -3,7 +3,7 @@
 
 #include <cstring>
 
-#include <ze_api.h>
+#include <level_zero/ze_api.h>
 #include "ze_utils.hpp"
 
 // need to create a function to parse the error code
@@ -11,7 +11,7 @@
 
 static void ze_check_status(const ze_result_t result, const char* file, const int line) {
     if (result != ZE_RESULT_SUCCESS) {
-        printf("L0 error at %s:%d: %s\n", file, line, zeGetErrorString(result).c_str());
+        printf("L0 error at %s:%d: %s\n", file, line, zeGetReturnString(result).c_str());
         exit(EXIT_FAILURE);
     }
 }
@@ -121,6 +121,23 @@ inline ze_device_handle_t findDevice(ze_driver_handle_t pDriver,
     return found;
 }
 
+static void printShortInfo(ze_driver_handle_t driver,
+                           ze_device_handle_t device,
+                           uint32_t device_id) {
+    // driver info
+    ze_driver_properties_t drv_props;
+    drv_props.stype = ZE_STRUCTURE_TYPE_DRIVER_PROPERTIES;
+    CHECK_ZE_STATUS(zeDriverGetProperties(driver, &drv_props));
+    std::cout << "Driver Vers: " << drv_props.driverVersion << "\n";
+
+    // device info
+    ze_device_properties_t dev_props;
+    dev_props.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
+    CHECK_ZE_STATUS(zeDeviceGetProperties(device, &dev_props));
+
+    std::cout << zeGetDeviceTypeString(dev_props.type) << ": " << device_id << ": " << dev_props.name << "\n";
+}
+
 int main(int argc, char* argv[]) {
     // process args
     bool use_print_usage = smi_argparse(argc, argv, "-h", "--help");
@@ -156,10 +173,10 @@ int main(int argc, char* argv[]) {
     }
 
     // step 1: get device
-    uint32_t dev_id = 0;
     uint32_t dev_cnt = 0;
     std::vector<ze_device_handle_t> dev_list;
 
+    uint32_t dev_id = 0;
     for (auto drv : drv_list) {
         // get dev cnt
         CHECK_ZE_STATUS(zeDeviceGet(drv, &dev_cnt, nullptr));
@@ -169,6 +186,8 @@ int main(int argc, char* argv[]) {
         // get dev from dev list
         for (auto dev: dev_list) {
             // printShortInfo, drv, dev, dev_id
+            printShortInfo(drv, dev, dev_id);
+            ++dev_id;
             // printProcess
         }
     }
