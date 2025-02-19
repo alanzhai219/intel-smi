@@ -125,13 +125,13 @@ static void printShortInfo(ze_driver_handle_t driver,
                            ze_device_handle_t device,
                            uint32_t device_id) {
     // driver info
-    ze_driver_properties_t drv_props;
+    ze_driver_properties_t drv_props = {};
     drv_props.stype = ZE_STRUCTURE_TYPE_DRIVER_PROPERTIES;
     CHECK_ZE_STATUS(zeDriverGetProperties(driver, &drv_props));
     std::cout << "Driver Vers: " << zeGetDriverVersionString(drv_props.driverVersion) << "\n";
 
     // device info
-    ze_device_properties_t dev_props;
+    ze_device_properties_t dev_props = {};
     dev_props.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
     CHECK_ZE_STATUS(zeDeviceGetProperties(device, &dev_props));
 
