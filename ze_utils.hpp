@@ -97,3 +97,13 @@ std::string zeGetDeviceTypeString(ze_device_type_t type) {
             return "Unknown ze_device_type_t value: " + std::to_string(static_cast<int>(type));
     }
 }
+
+std::string zeGetDriverVersionString(uint32_t driver_version) {
+    uint32_t major = driver_version >> 24;
+    uint32_t minor = (driver_version >> 16) & 0xFF;
+    uint32_t rev = driver_version & 0xFFFF;
+    std::string version = std::to_string(major) + "." +
+                          std::to_string(minor) + "." +
+                          std::to_string(rev);
+    return version;
+}
