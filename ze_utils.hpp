@@ -98,6 +98,10 @@ std::string zeGetDeviceTypeString(ze_device_type_t type) {
     }
 }
 
+/*
+  uint32_t [31 ------ 23][22 ------ 15][14 ------ 0]
+  uint32_t [    major   ][    minor   ][    rev    ]   
+*/
 std::string zeGetDriverVersionString(uint32_t driver_version) {
     uint32_t major = driver_version >> 24;
     uint32_t minor = (driver_version >> 16) & 0xFF;
