@@ -1,9 +1,11 @@
 #include <iostream>
+#include <fstream>
 #include <vector>
 
 #include <cstring>
 
 #include <level_zero/ze_api.h>
+#include <level_zero/zes_api.h>
 #include "ze_utils.hpp"
 
 // need to create a function to parse the error code
@@ -136,6 +138,39 @@ static void printShortInfo(ze_driver_handle_t driver,
     CHECK_ZE_STATUS(zeDeviceGetProperties(device, &dev_props));
 
     std::cout << zeGetDeviceTypeString(dev_props.type) << ": " << device_id << ": " << dev_props.name << "\n";
+}
+
+static std::string getProcessName(uint32_t pid) {
+    std::string proc_name;
+    std::string file_name = "/proc/" + std::to_string(pid) + "/cmdline";
+    
+    std::ifstream file(file_name);
+    if (!file) {
+        return std::string();
+    }
+
+    std::getline(file, proc_name, '\0');
+
+    return proc_name;
+}
+
+static void printProcesses(zes_device_handle_t device) {
+    // get state list
+    uint32_t proc_cnt = 0;
+    CHECK_ZE_STATUS(zesDeviceProcessesGetState(device, &proc_cnt, nullptr));
+    if (proc_cnt == 0) {
+        return;
+    }
+
+    std::vector<zes_process_state_t> dev_state_list(proc_cnt);
+    CHECK_ZE_STATUS(zesDeviceProcessesGetState(device, &proc_cnt, dev_state_list.data()));
+
+    std::cout << "Running Processes: " << proc_cnt << "\n";
+
+    // get process name
+    for (auto& state : dev_state_list) {
+        std::cout << "process name: " << getProcessName(state.processId)  << "\n";
+    }
 }
 
 int main(int argc, char* argv[]) {

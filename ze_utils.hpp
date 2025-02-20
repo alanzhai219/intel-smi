@@ -1,5 +1,5 @@
 #include <string>
-#include <ze_api.h>
+#include <level_zero/ze_api.h>
 
 // api wrapper for level-zero.
 // ze_get_error_code is a overload funtion.
