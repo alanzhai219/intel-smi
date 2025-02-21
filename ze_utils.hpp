@@ -1,5 +1,6 @@
 #include <string>
 #include <level_zero/ze_api.h>
+#include <level_zero/zes_api.h>
 
 // api wrapper for level-zero.
 // ze_get_error_code is a overload funtion.
@@ -110,4 +111,23 @@ std::string zeGetDriverVersionString(uint32_t driver_version) {
                           std::to_string(minor) + "." +
                           std::to_string(rev);
     return version;
+}
+
+std::string zesGetEngineString(zes_engine_type_flags_t eng) {
+    switch(eng) {
+        case ZES_ENGINE_TYPE_FLAG_OTHER:
+            return "ZES_ENGINE_TYPE_FLAG_OTHER";
+        case ZES_ENGINE_TYPE_FLAG_COMPUTE:
+            return "ZES_ENGINE_TYPE_FLAG_COMPUTE";
+        case ZES_ENGINE_TYPE_FLAG_3D:
+            return "ZES_ENGINE_TYPE_FLAG_3D";
+        case ZES_ENGINE_TYPE_FLAG_MEDIA:
+            return "ZES_ENGINE_TYPE_FLAG_MEDIA";
+        case ZES_ENGINE_TYPE_FLAG_DMA:
+            return "ZES_ENGINE_TYPE_FLAG_DMA";
+        case ZES_ENGINE_TYPE_FLAG_RENDER:
+            return "ZES_ENGINE_TYPE_FLAG_RENDER";
+        default:
+            return "Unknown zes_engine_type_flag_t value: " + std::to_string(static_cast<int>(eng));
+    }
 }

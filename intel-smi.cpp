@@ -3,6 +3,8 @@
 #include <vector>
 
 #include <cstring>
+#include <cstdlib>
+#include <cassert>
 
 #include <level_zero/ze_api.h>
 #include <level_zero/zes_api.h>
@@ -154,7 +156,7 @@ static std::string getProcessName(uint32_t pid) {
     return proc_name;
 }
 
-static void printProcesses(zes_device_handle_t device) {
+static void printProcesses(zes_device_handle_t device, uint32_t device_id) {
     // get state list
     uint32_t proc_cnt = 0;
     CHECK_ZE_STATUS(zesDeviceProcessesGetState(device, &proc_cnt, nullptr));
@@ -169,7 +171,8 @@ static void printProcesses(zes_device_handle_t device) {
 
     // get process name
     for (auto& state : dev_state_list) {
-        std::cout << "process name: " << getProcessName(state.processId)  << "\n";
+        std::cout << device_id << " process name: " << getProcessName(state.processId)
+                                << " engine name: " << zesGetEngineString(state.engines) << "\n";
     }
 }
 
@@ -184,12 +187,18 @@ int main(int argc, char* argv[]) {
         exit(EXIT_SUCCESS);
     }
 
-    // step 0: zeInitDrivers
+    // step 0: set envs
+    // must be set before init
+    int status = setenv("ZES_ENABLE_SYSMAN", "1", 1);
+    assert((status == 0) && "Failed set env ZES_ENABLE_SYSMAN");
+
+    // step 1: zeInitDrivers
     // drv
     uint32_t drv_cnt = 0;
     std::vector<ze_driver_handle_t> drv_list;
 
     if (use_new_api) {
+        // new init style
         ze_init_driver_type_desc_t driverTypeDesc = {};
         driverTypeDesc.flags = ZE_INIT_DRIVER_TYPE_FLAG_GPU;
         driverTypeDesc.pNext = nullptr;
@@ -197,9 +206,8 @@ int main(int argc, char* argv[]) {
         CHECK_ZE_STATUS(zeInitDrivers(&drv_cnt, nullptr, &driverTypeDesc));
         drv_list.resize(drv_cnt);
         CHECK_ZE_STATUS(zeInitDrivers(&drv_cnt, drv_list.data(), &driverTypeDesc));
-
     } else {
-        // init
+        // old init style
         CHECK_ZE_STATUS(zeInit(ZE_INIT_DRIVER_TYPE_FLAG_GPU));
 
         CHECK_ZE_STATUS(zeDriverGet(&drv_cnt, nullptr));
@@ -222,6 +230,7 @@ int main(int argc, char* argv[]) {
         for (auto dev: dev_list) {
             // printShortInfo, drv, dev, dev_id
             printShortInfo(drv, dev, dev_id);
+            printProcesses(dev, dev_id);
             ++dev_id;
             // printProcess
         }
