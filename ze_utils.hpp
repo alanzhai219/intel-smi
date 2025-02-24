@@ -128,6 +128,6 @@ std::string zesGetEngineString(zes_engine_type_flags_t eng) {
         case ZES_ENGINE_TYPE_FLAG_RENDER:
             return "ZES_ENGINE_TYPE_FLAG_RENDER";
         default:
-            return "Unknown zes_engine_type_flag_t value: " + std::to_string(static_cast<int>(eng));
+            return "Unknown zes_engine_type_flags_t value: " + std::to_string(static_cast<int>(eng));
     }
 }

@@ -1,6 +1,9 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <thread>
+#include <chrono>
+#include <mutex>
 
 #include <cstring>
 #include <cstdlib>
@@ -9,6 +12,8 @@
 #include <level_zero/ze_api.h>
 #include <level_zero/zes_api.h>
 #include "ze_utils.hpp"
+
+std::mutex mtx;
 
 // need to create a function to parse the error code
 // ze_get_error_code
@@ -156,7 +161,44 @@ static std::string getProcessName(uint32_t pid) {
     return proc_name;
 }
 
+namespace detail {
+static void getEngineUtilization(zes_device_handle_t device) {
+    uint32_t engine_count = 0;
+    CHECK_ZE_STATUS(zesDeviceEnumEngineGroups(device, &engine_count, nullptr));
+    if (engine_count == 0) {
+        std::cout << "No engine groups found\n";
+        return;
+    }
+    std::vector<zes_engine_handle_t> engines(engine_count);
+    CHECK_ZE_STATUS(zesDeviceEnumEngineGroups(device, &engine_count, engines.data()));
+    for (auto& engine : engines) {
+        zes_engine_properties_t props = {};
+        props.stype = ZES_STRUCTURE_TYPE_ENGINE_PROPERTIES;
+        props.pNext = nullptr;
+        CHECK_ZE_STATUS(zesEngineGetProperties(engine, &props));
+
+        zes_engine_stats_t s1 = {};
+        // CHECK_ZE_STATUS(zesEngineGetActivity(engine, &s1));
+        const uint32_t GPU_INTERNAL_PERIOD = 110;
+        std::this_thread::sleep_for(std::chrono::milliseconds(GPU_INTERNAL_PERIOD));
+        zes_engine_stats_t s2 = {};
+        CHECK_ZE_STATUS(zesEngineGetActivity(engine, &s2));
+        double util = (s2.activeTime - s1.activeTime) / (s2.timestamp - s1.timestamp);
+        std::cout << "Engine " << props.type << " utilization: " << util * 100 << "%\n";
+    }
+}
+
+static void printGlobalMemoryStatus() {
+
+}
+
+static void printSharedMemoryStatus() {
+
+}
+}
+
 static void printProcesses(zes_device_handle_t device, uint32_t device_id) {
+    std::lock_guard<std::mutex> lk(mtx);
     // get state list
     uint32_t proc_cnt = 0;
     CHECK_ZE_STATUS(zesDeviceProcessesGetState(device, &proc_cnt, nullptr));
@@ -172,8 +214,9 @@ static void printProcesses(zes_device_handle_t device, uint32_t device_id) {
     // get process name
     for (auto& state : dev_state_list) {
         std::cout << device_id << " process name: " << getProcessName(state.processId)
-                                << " engine name: " << zesGetEngineString(state.engines) << "\n";
+                               << " engine name: " << zesGetEngineString(state.engines) << "\n";
     }
+    detail::getEngineUtilization(device);
 }
 
 int main(int argc, char* argv[]) {
