@@ -130,21 +130,21 @@ inline ze_device_handle_t findDevice(ze_driver_handle_t pDriver,
     return found;
 }
 
-static void printShortInfo(ze_driver_handle_t driver,
-                           ze_device_handle_t device,
+static void printShortInfo(zes_driver_handle_t driver,
+                           zes_device_handle_t device,
                            uint32_t device_id) {
     // driver info
-    ze_driver_properties_t drv_props = {};
-    drv_props.stype = ZE_STRUCTURE_TYPE_DRIVER_PROPERTIES;
-    CHECK_ZE_STATUS(zeDriverGetProperties(driver, &drv_props));
-    std::cout << "Driver Vers: " << zeGetDriverVersionString(drv_props.driverVersion) << "\n";
+    // ze_driver_properties_t drv_props = {};
+    // drv_props.stype = ZE_STRUCTURE_TYPE_DRIVER_PROPERTIES;
+    // CHECK_ZE_STATUS(zeDriverGetProperties(driver, &drv_props));
+    // std::cout << "Driver Vers: " << zeGetDriverVersionString(drv_props.driverVersion) << "\n";
 
     // device info
-    ze_device_properties_t dev_props = {};
-    dev_props.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
-    CHECK_ZE_STATUS(zeDeviceGetProperties(device, &dev_props));
+    zes_device_properties_t dev_props = {};
+    dev_props.stype = ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES;
+    CHECK_ZE_STATUS(zesDeviceGetProperties(device, &dev_props));
 
-    std::cout << zeGetDeviceTypeString(dev_props.type) << ": " << device_id << ": " << dev_props.name << "\n";
+    std::cout << zeGetDeviceTypeString(dev_props.core.type) << ": " << device_id << ": " << dev_props.core.name << "\n";
 }
 
 static std::string getProcessName(uint32_t pid) {
@@ -213,7 +213,7 @@ static void printProcesses(zes_device_handle_t device, uint32_t device_id) {
 
     // get process name
     for (auto& state : dev_state_list) {
-        std::cout << device_id << " process name: " << getProcessName(state.processId)
+        std::cout << device_id << " process name: " << getProcessName(state.processId) << ", "
                                << " engine name: " << zesGetEngineString(state.engines) << "\n";
     }
     detail::getEngineUtilization(device);
@@ -242,6 +242,7 @@ int main(int argc, char* argv[]) {
 
     if (use_new_api) {
         // new init style
+        std::cout << "init by zeInitDrivers API\n";
         ze_init_driver_type_desc_t driverTypeDesc = {};
         driverTypeDesc.flags = ZE_INIT_DRIVER_TYPE_FLAG_GPU;
         driverTypeDesc.pNext = nullptr;
@@ -251,21 +252,24 @@ int main(int argc, char* argv[]) {
         CHECK_ZE_STATUS(zeInitDrivers(&drv_cnt, drv_list.data(), &driverTypeDesc));
     } else {
         // old init style
+        std::cout << "init by zeInit API\n";
         CHECK_ZE_STATUS(zeInit(ZE_INIT_DRIVER_TYPE_FLAG_GPU));
 
-        CHECK_ZE_STATUS(zeDriverGet(&drv_cnt, nullptr));
+        CHECK_ZE_STATUS(zesInit(0));
+
+        CHECK_ZE_STATUS(zesDriverGet(&drv_cnt, nullptr));
         drv_list.resize(drv_cnt);
-        CHECK_ZE_STATUS(zeDriverGet(&drv_cnt, drv_list.data()));
+        CHECK_ZE_STATUS(zesDriverGet(&drv_cnt, drv_list.data()));
     }
 
     // step 1: get device
     uint32_t dev_cnt = 0;
-    std::vector<ze_device_handle_t> dev_list;
+    std::vector<zes_device_handle_t> dev_list;
 
     uint32_t dev_id = 0;
     for (auto drv : drv_list) {
         // get dev cnt
-        CHECK_ZE_STATUS(zeDeviceGet(drv, &dev_cnt, nullptr));
+        CHECK_ZE_STATUS(zesDeviceGet(drv, &dev_cnt, nullptr));
         // get dev list attached to specific drv
         dev_list.resize(dev_cnt);
         CHECK_ZE_STATUS(zeDeviceGet(drv, &dev_cnt, dev_list.data()));
